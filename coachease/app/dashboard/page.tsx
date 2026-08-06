@@ -16,16 +16,19 @@ export default function Dashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [newClient, setNewClient] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [addingClient, setAddingClient] = useState(false);
 
   useEffect(() => {
     loadClients();
   }, []);
 
   async function loadClients() {
+    setErrorMessage("");
+
     const { data, error } = await supabase
       .from("clients")
-      .select("*")
-      .order("created_at");
+      .select("id, name")
+      .order("created_at", { ascending: true });
 
     if (error) {
       setErrorMessage(error.message);
@@ -38,21 +41,36 @@ export default function Dashboard() {
   async function addClient() {
     const name = newClient.trim();
 
-    if (!name) return;
+    if (!name || addingClient) return;
 
+    setAddingClient(true);
     setErrorMessage("");
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setErrorMessage("You are not signed in.");
+      setAddingClient(false);
+      return;
+    }
 
     const { error } = await supabase.from("clients").insert({
       name,
+      coach_id: user.id,
     });
 
     if (error) {
       setErrorMessage(error.message);
+      setAddingClient(false);
       return;
     }
 
     setNewClient("");
     await loadClients();
+    setAddingClient(false);
   }
 
   return (
@@ -106,10 +124,11 @@ export default function Dashboard() {
 
           <button
             onClick={addClient}
-            className="px-7 py-4 font-bold text-black"
+            disabled={addingClient}
+            className="px-7 py-4 font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: ACCENT }}
           >
-            Add client
+            {addingClient ? "Adding..." : "Add client"}
           </button>
         </div>
 
