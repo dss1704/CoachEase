@@ -1,218 +1,150 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 const ACCENT = "#B7FF3C";
 
-type ClientForm = {
+type ClientRow = {
+  id: string;
   name: string;
-  email: string;
-  phone: string;
-  start_date: string;
-  goal: string;
-  starting_weight: string;
-  current_weight: string;
-  target_weight: string;
-  daily_calories: string;
-  protein_target: string;
-  carbs_target: string;
-  fat_target: string;
-  coach_notes: string;
+  start_date: string | null;
+  goal: string | null;
+  starting_weight: number | null;
+  current_weight: number | null;
+  target_weight: number | null;
+  daily_calories: number | null;
+  protein_target: number | null;
+  carbs_target: number | null;
+  fat_target: number | null;
+  coach_notes: string | null;
 };
 
-const EMPTY_FORM: ClientForm = {
-  name: "",
-  email: "",
-  phone: "",
-  start_date: "",
-  goal: "",
-  starting_weight: "",
-  current_weight: "",
-  target_weight: "",
-  daily_calories: "",
-  protein_target: "",
-  carbs_target: "",
-  fat_target: "",
-  coach_notes: "",
+type CheckInRow = {
+  id: string;
+  check_in_date: string;
+  weight: number | null;
+  adherence: number | null;
+  energy: number | null;
+  hunger: number | null;
+  sleep: number | null;
+  notes: string | null;
+  created_at: string;
 };
 
-export default function ClientPage() {
+export default function ClientDashboardPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const clientId = params.id;
 
-  const [form, setForm] = useState<ClientForm>(EMPTY_FORM);
+  const [client, setClient] = useState<ClientRow | null>(null);
+  const [checkIns, setCheckIns] = useState<CheckInRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [deletingClient, setDeletingClient] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    async function loadClient() {
+    async function loadDashboard() {
       setLoading(true);
       setErrorMessage("");
 
-      const { data, error } = await supabase
+      const { data: clientData, error: clientError } = await supabase
         .from("clients")
-        .select(
-          `
-            id,
-            name,
-            email,
-            phone,
-            start_date,
-            goal,
-            starting_weight,
-            current_weight,
-            target_weight,
-            daily_calories,
-            protein_target,
-            carbs_target,
-            fat_target,
-            coach_notes
-          `
-        )
+        .select(`
+          id,
+          name,
+          start_date,
+          goal,
+          starting_weight,
+          current_weight,
+          target_weight,
+          daily_calories,
+          protein_target,
+          carbs_target,
+          fat_target,
+          coach_notes
+        `)
         .eq("id", clientId)
         .single();
 
-      if (error || !data) {
+      if (clientError || !clientData) {
         setNotFound(true);
         setLoading(false);
         return;
       }
 
-      setForm({
-        name: data.name ?? "",
-        email: data.email ?? "",
-        phone: data.phone ?? "",
-        start_date: data.start_date ?? "",
-        goal: data.goal ?? "",
-        starting_weight:
-          data.starting_weight === null
-            ? ""
-            : String(data.starting_weight),
-        current_weight:
-          data.current_weight === null
-            ? ""
-            : String(data.current_weight),
-        target_weight:
-          data.target_weight === null
-            ? ""
-            : String(data.target_weight),
-        daily_calories:
-          data.daily_calories === null
-            ? ""
-            : String(data.daily_calories),
-        protein_target:
-          data.protein_target === null
-            ? ""
-            : String(data.protein_target),
-        carbs_target:
-          data.carbs_target === null
-            ? ""
-            : String(data.carbs_target),
-        fat_target:
-          data.fat_target === null
-            ? ""
-            : String(data.fat_target),
-        coach_notes: data.coach_notes ?? "",
-      });
+      setClient(clientData);
+
+      const { data: checkInData, error: checkInError } = await supabase
+        .from("check_ins")
+        .select(`
+          id,
+          check_in_date,
+          weight,
+          adherence,
+          energy,
+          hunger,
+          sleep,
+          notes,
+          created_at
+        `)
+        .eq("client_id", clientId)
+        .order("check_in_date", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (checkInError) {
+        setErrorMessage(checkInError.message);
+      } else {
+        setCheckIns(checkInData ?? []);
+      }
 
       setLoading(false);
     }
 
-    void loadClient();
+    void loadDashboard();
   }, [clientId]);
 
-  function updateField(field: keyof ClientForm, value: string) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  const latest = checkIns[0] ?? null;
+  const previous = checkIns[1] ?? null;
 
-    setSuccessMessage("");
-  }
+  const latestWeight =
+    latest?.weight ?? client?.current_weight ?? client?.starting_weight ?? null;
 
-  function textOrNull(value: string) {
-    const trimmedValue = value.trim();
-    return trimmedValue === "" ? null : trimmedValue;
-  }
+  const weightChange =
+    latest?.weight !== null &&
+    latest?.weight !== undefined &&
+    previous?.weight !== null &&
+    previous?.weight !== undefined
+      ? latest.weight - previous.weight
+      : null;
 
-  function numberOrNull(value: string) {
-    const trimmedValue = value.trim();
+  const averageAdherence = useMemo(() => {
+    const values = checkIns
+      .map((item) => item.adherence)
+      .filter((value): value is number => value !== null);
 
-    if (trimmedValue === "") {
-      return null;
-    }
+    if (values.length === 0) return null;
 
-    const parsedValue = Number(trimmedValue);
+    return Math.round(
+      values.reduce((total, value) => total + value, 0) / values.length
+    );
+  }, [checkIns]);
 
-    return Number.isFinite(parsedValue) ? parsedValue : null;
-  }
-
-  async function saveClient(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const name = form.name.trim();
-
-    if (!name) {
-      setErrorMessage("Client name is required.");
-      return;
-    }
-
-    setSaving(true);
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    const { error } = await supabase
-      .from("clients")
-      .update({
-        name,
-        email: textOrNull(form.email),
-        phone: textOrNull(form.phone),
-        start_date: form.start_date || null,
-        goal: textOrNull(form.goal),
-        starting_weight: numberOrNull(form.starting_weight),
-        current_weight: numberOrNull(form.current_weight),
-        target_weight: numberOrNull(form.target_weight),
-        daily_calories: numberOrNull(form.daily_calories),
-        protein_target: numberOrNull(form.protein_target),
-        carbs_target: numberOrNull(form.carbs_target),
-        fat_target: numberOrNull(form.fat_target),
-        coach_notes: textOrNull(form.coach_notes),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", clientId);
-
-    if (error) {
-      setErrorMessage(error.message);
-      setSaving(false);
-      return;
-    }
-
-    setSuccessMessage("Client profile saved.");
-    setSaving(false);
-    router.refresh();
-  }
+  const distanceToTarget =
+    latestWeight == null || client?.target_weight == null
+      ? null
+      : Math.round((latestWeight - client.target_weight) * 10) / 10;
 
   async function deleteClient() {
-    const confirmed = window.confirm(
-      `Permanently delete ${form.name || "this client"}? This cannot be undone.`
-    );
+    if (!client || deletingClient) return;
 
-    if (!confirmed) {
-      return;
-    }
-
-    setDeleting(true);
+    setDeletingClient(true);
     setErrorMessage("");
-    setSuccessMessage("");
 
     const { error } = await supabase
       .from("clients")
@@ -221,7 +153,8 @@ export default function ClientPage() {
 
     if (error) {
       setErrorMessage(error.message);
-      setDeleting(false);
+      setDeletingClient(false);
+      setShowDeleteConfirm(false);
       return;
     }
 
@@ -233,21 +166,16 @@ export default function ClientPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
-          Loading client profile...
+          Loading client dashboard...
         </p>
       </main>
     );
   }
 
-  if (notFound) {
+  if (notFound || !client) {
     return (
       <main className="min-h-screen bg-black px-6 py-12 text-white">
         <p className="text-xl font-semibold">Client not found.</p>
-
-        <p className="mt-3 max-w-lg text-zinc-500">
-          This client does not exist or does not belong to your coach account.
-        </p>
-
         <Link
           href="/dashboard"
           className="mt-8 inline-block font-semibold"
@@ -262,407 +190,486 @@ export default function ClientPage() {
   return (
     <main className="min-h-screen bg-black px-6 py-10 text-white lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <nav className="flex items-center justify-between border-b border-white/20 pb-6">
+        <nav className="flex flex-col justify-between gap-5 border-b border-white/20 pb-6 sm:flex-row sm:items-center">
           <Link
             href="/dashboard"
             className="font-mono text-xs font-bold uppercase tracking-[0.18em]"
             style={{ color: ACCENT }}
           >
-            ← Dashboard
+            ← All clients
           </Link>
 
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-            Client ID · {clientId.slice(0, 8)}
-          </span>
-        </nav>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/clients/${clientId}/profile`}
+              className="border border-white/20 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white transition hover:bg-white/5"
+            >
+              Edit client
+            </Link>
 
-        <header className="border-b border-white/20 py-14">
-          <p
-            className="font-mono text-xs font-bold uppercase tracking-[0.24em]"
-            style={{ color: ACCENT }}
-          >
-            Client profile
-          </p>
-
-          <h1 className="mt-4 break-words text-5xl font-black uppercase leading-[0.95] tracking-[-0.055em] sm:text-6xl">
-            {form.name || "Unnamed client"}
-          </h1>
-
-          <p className="mt-5 text-zinc-500">
-            Personal details, goals, nutrition targets and private coaching
-            notes.
-          </p>
-        </header>
-
-        <form onSubmit={saveClient}>
-          <ProfileSection
-            number="01"
-            label="Personal details"
-            description="The client's basic contact and onboarding information."
-          >
-            <div className="grid gap-6 md:grid-cols-2">
-              <Field label="Full name" required>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(event) =>
-                    updateField("name", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="Client name"
-                />
-              </Field>
-
-              <Field label="Start date">
-                <input
-                  type="date"
-                  value={form.start_date}
-                  onChange={(event) =>
-                    updateField("start_date", event.target.value)
-                  }
-                  className={inputClassName}
-                />
-              </Field>
-
-              <Field label="Email address">
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(event) =>
-                    updateField("email", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="client@example.com"
-                />
-              </Field>
-
-              <Field label="Phone number">
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(event) =>
-                    updateField("phone", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="+44..."
-                />
-              </Field>
-            </div>
-          </ProfileSection>
-
-          <ProfileSection
-            number="02"
-            label="Goal and progress"
-            description="Record what the client is working towards and their current position."
-          >
-            <Field label="Primary goal">
-              <textarea
-                value={form.goal}
-                onChange={(event) =>
-                  updateField("goal", event.target.value)
-                }
-                className={`${inputClassName} min-h-32 resize-y`}
-                placeholder="Lose body fat while maintaining strength..."
-              />
-            </Field>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-3">
-              <Field label="Starting weight" suffix="kg">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={form.starting_weight}
-                  onChange={(event) =>
-                    updateField("starting_weight", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="0.0"
-                />
-              </Field>
-
-              <Field label="Current weight" suffix="kg">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={form.current_weight}
-                  onChange={(event) =>
-                    updateField("current_weight", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="0.0"
-                />
-              </Field>
-
-              <Field label="Target weight" suffix="kg">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={form.target_weight}
-                  onChange={(event) =>
-                    updateField("target_weight", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="0.0"
-                />
-              </Field>
-            </div>
-          </ProfileSection>
-
-          <ProfileSection
-            number="03"
-            label="Nutrition targets"
-            description="Set the client's current daily calorie and macronutrient targets."
-          >
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              <Field label="Daily calories" suffix="kcal">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.daily_calories}
-                  onChange={(event) =>
-                    updateField("daily_calories", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="2200"
-                />
-              </Field>
-
-              <Field label="Protein" suffix="g">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.protein_target}
-                  onChange={(event) =>
-                    updateField("protein_target", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="180"
-                />
-              </Field>
-
-              <Field label="Carbohydrates" suffix="g">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.carbs_target}
-                  onChange={(event) =>
-                    updateField("carbs_target", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="220"
-                />
-              </Field>
-
-              <Field label="Fat" suffix="g">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.fat_target}
-                  onChange={(event) =>
-                    updateField("fat_target", event.target.value)
-                  }
-                  className={inputClassName}
-                  placeholder="70"
-                />
-              </Field>
-            </div>
-
-            <MacroSummary form={form} />
-          </ProfileSection>
-
-          <ProfileSection
-            number="04"
-            label="Private coach notes"
-            description="These notes are private to the coach and are not visible to the client."
-          >
-            <textarea
-              value={form.coach_notes}
-              onChange={(event) =>
-                updateField("coach_notes", event.target.value)
-              }
-              className={`${inputClassName} min-h-48 resize-y`}
-              placeholder="Injuries, preferences, adherence concerns, coaching observations..."
-            />
-          </ProfileSection>
-
-          {(errorMessage || successMessage) && (
-            <div className="border-t border-white/20 py-6">
-              {errorMessage && (
-                <p className="border border-red-500/40 bg-red-500/10 px-5 py-4 text-sm text-red-300">
-                  {errorMessage}
-                </p>
-              )}
-
-              {successMessage && (
-                <p
-                  className="border px-5 py-4 text-sm"
-                  style={{
-                    borderColor: `${ACCENT}66`,
-                    backgroundColor: `${ACCENT}12`,
-                    color: ACCENT,
-                  }}
-                >
-                  {successMessage}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col justify-between gap-5 border-t border-white/20 py-8 sm:flex-row sm:items-center">
             <button
               type="button"
-              onClick={deleteClient}
-              disabled={deleting || saving}
-              className="border border-red-500/40 px-6 py-4 font-semibold text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="border border-red-500/40 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-red-400 transition hover:bg-red-500/10"
             >
-              {deleting ? "Deleting..." : "Delete client"}
+              Delete client
             </button>
 
-            <button
-              type="submit"
-              disabled={saving || deleting}
-              className="min-w-48 px-8 py-4 font-bold text-black transition hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ backgroundColor: ACCENT }}
-            >
-              {saving ? "Saving..." : "Save profile"}
-            </button>
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+              Client ID · {clientId.slice(0, 8)}
+            </span>
           </div>
-        </form>
+        </nav>
+
+        <header className="grid gap-10 border-b border-white/20 py-14 lg:grid-cols-[1fr_420px] lg:items-end">
+          <div>
+            <p
+              className="font-mono text-xs font-bold uppercase tracking-[0.24em]"
+              style={{ color: ACCENT }}
+            >
+              Client dashboard
+            </p>
+            <h1 className="mt-4 break-words text-5xl font-black uppercase leading-[0.95] tracking-[-0.055em] sm:text-6xl">
+              {client.name}
+            </h1>
+            <p className="mt-5 max-w-2xl text-zinc-500">
+              {client.goal || "No primary goal has been added yet."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-px border border-white/20 bg-white/20">
+            <HeaderMeta label="Started" value={formatDate(client.start_date)} />
+            <HeaderMeta label="Check-ins" value={String(checkIns.length)} />
+          </div>
+        </header>
+
+        {errorMessage && (
+          <div className="border-b border-white/20 py-6">
+            <p className="border border-red-500/40 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+              {errorMessage}
+            </p>
+          </div>
+        )}
+
+        <section className="grid gap-px border-b border-white/20 bg-white/20 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Current weight"
+            value={latestWeight == null ? "—" : `${latestWeight} kg`}
+            helper={
+              client.target_weight == null
+                ? "No target set"
+                : `Target ${client.target_weight} kg`
+            }
+          />
+          <MetricCard
+            label="Latest change"
+            value={formatSignedWeight(weightChange)}
+            helper={previous ? "Vs previous check-in" : "Need 2 check-ins"}
+            accent={weightChange !== null}
+          />
+          <MetricCard
+            label="Adherence"
+            value={latest?.adherence == null ? "—" : `${latest.adherence}%`}
+            helper={
+              averageAdherence == null
+                ? "No adherence data"
+                : `${averageAdherence}% average`
+            }
+          />
+          <MetricCard
+            label="To target"
+            value={distanceToTarget == null ? "—" : `${Math.abs(distanceToTarget)} kg`}
+            helper={
+              client.target_weight == null
+                ? "No target set"
+                : distanceToTarget === 0
+                  ? "Target reached"
+                  : `Target ${client.target_weight} kg`
+            }
+            accent={distanceToTarget !== null}
+          />
+        </section>
+
+        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+          <SectionIntro
+            number="01"
+            label="Latest check-in"
+            description="The client's most recent weekly submission and recovery signals."
+          />
+
+          {latest ? (
+            <div>
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+                    Most recent
+                  </p>
+                  <p className="mt-2 text-2xl font-black uppercase tracking-[-0.03em]">
+                    {formatDate(latest.check_in_date)}
+                  </p>
+                </div>
+
+                <Link
+                  href={`/clients/${clientId}/check-ins`}
+                  className="font-semibold underline decoration-[1px] underline-offset-8"
+                  style={{ textDecorationColor: ACCENT }}
+                >
+                  Add new check-in
+                </Link>
+              </div>
+
+              <div className="mt-6 grid gap-px border border-white/20 bg-white/20 sm:grid-cols-2 xl:grid-cols-5">
+                <CheckInStat
+                  label="Weight"
+                  value={latest.weight == null ? "—" : `${latest.weight} kg`}
+                />
+                <CheckInStat
+                  label="Adherence"
+                  value={latest.adherence == null ? "—" : `${latest.adherence}%`}
+                />
+                <CheckInStat
+                  label="Energy"
+                  value={latest.energy == null ? "—" : `${latest.energy}/10`}
+                />
+                <CheckInStat
+                  label="Hunger"
+                  value={latest.hunger == null ? "—" : `${latest.hunger}/10`}
+                />
+                <CheckInStat
+                  label="Sleep"
+                  value={latest.sleep == null ? "—" : `${latest.sleep}/10`}
+                />
+              </div>
+
+              <div className="mt-6 border border-white/20 bg-[#090909] p-6">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+                  Check-in notes
+                </p>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+                  {latest.notes || "No notes were added to this check-in."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <EmptyState
+              title="No check-ins yet"
+              body="Add the first weekly check-in to begin building progress history."
+              href={`/clients/${clientId}/check-ins`}
+              action="Add first check-in"
+            />
+          )}
+        </section>
+
+        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+          <SectionIntro
+            number="02"
+            label="Progress"
+            description="A quick view of weight history across recent check-ins."
+          />
+
+          {checkIns.some((item) => item.weight !== null) ? (
+            <WeightTrend checkIns={checkIns} />
+          ) : (
+            <EmptyState
+              title="No weight history"
+              body="Weight entries from weekly check-ins will appear here."
+              href={`/clients/${clientId}/check-ins`}
+              action="Add check-in"
+            />
+          )}
+        </section>
+
+        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+          <SectionIntro
+            number="03"
+            label="Nutrition"
+            description="Current calorie and macronutrient targets."
+          />
+
+          <div>
+            <div className="grid gap-px border border-white/20 bg-white/20 sm:grid-cols-2 xl:grid-cols-4">
+              <NutritionStat
+                label="Calories"
+                value={
+                  client.daily_calories == null
+                    ? "—"
+                    : `${client.daily_calories.toLocaleString()}`
+                }
+                suffix="kcal"
+              />
+              <NutritionStat
+                label="Protein"
+                value={client.protein_target == null ? "—" : `${client.protein_target}`}
+                suffix="g"
+              />
+              <NutritionStat
+                label="Carbs"
+                value={client.carbs_target == null ? "—" : `${client.carbs_target}`}
+                suffix="g"
+              />
+              <NutritionStat
+                label="Fat"
+                value={client.fat_target == null ? "—" : `${client.fat_target}`}
+                suffix="g"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Link
+                href={`/clients/${clientId}/nutrition`}
+                className="font-semibold underline decoration-[1px] underline-offset-8"
+                style={{ textDecorationColor: ACCENT }}
+              >
+                Edit nutrition targets
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 py-12 lg:grid-cols-[280px_1fr]">
+          <SectionIntro
+            number="04"
+            label="Coach notes"
+            description="Private context and observations for this client."
+          />
+
+          <div className="border border-white/20 bg-[#090909] p-6">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+              {client.coach_notes || "No private coach notes yet."}
+            </p>
+          </div>
+        </section>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg border border-white/20 bg-black">
+            <div className="border-b border-white/20 p-6">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-red-400">
+                Delete client
+              </p>
+
+              <h2 className="mt-3 text-2xl font-black uppercase tracking-[-0.03em]">
+                Are you sure?
+              </h2>
+
+              <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+                You are about to permanently delete{" "}
+                <span className="font-semibold text-white">{client.name}</span>.
+                This will also delete their associated check-ins. This action
+                cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 p-6 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletingClient}
+                className="border border-white/20 px-6 py-3 font-semibold transition hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={deleteClient}
+                disabled={deletingClient}
+                className="border border-red-500/40 bg-red-500/10 px-6 py-3 font-semibold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingClient ? "Deleting..." : "Yes, delete client"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
-const inputClassName =
-  "mt-3 w-full border border-white/20 bg-[#090909] px-4 py-4 text-white outline-none transition placeholder:text-zinc-700 focus:border-white";
-
-function Field({
-  label,
-  suffix,
-  required = false,
-  children,
-}: {
-  label: string;
-  suffix?: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="flex items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-        <span>
-          {label}
-          {required && (
-            <span className="ml-1" style={{ color: ACCENT }}>
-              *
-            </span>
-          )}
-        </span>
-
-        {suffix && <span className="text-zinc-700">{suffix}</span>}
-      </span>
-
-      {children}
-    </label>
-  );
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-function ProfileSection({
-  number,
-  label,
-  description,
-  children,
-}: {
-  number: string;
-  label: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
-      <div>
-        <p
-          className="font-mono text-xs font-bold"
-          style={{ color: ACCENT }}
-        >
-          {number}
-        </p>
-
-        <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">
-          {label}
-        </h2>
-
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-500">
-          {description}
-        </p>
-      </div>
-
-      <div>{children}</div>
-    </section>
-  );
+function formatSignedWeight(value: number | null) {
+  if (value === null) return "—";
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded > 0 ? "+" : ""}${rounded} kg`;
 }
 
-function MacroSummary({ form }: { form: ClientForm }) {
-  const proteinCalories = Number(form.protein_target || 0) * 4;
-  const carbohydrateCalories = Number(form.carbs_target || 0) * 4;
-  const fatCalories = Number(form.fat_target || 0) * 9;
-
-  const calculatedCalories =
-    proteinCalories + carbohydrateCalories + fatCalories;
-
-  const targetCalories = Number(form.daily_calories || 0);
-  const difference = calculatedCalories - targetCalories;
-
+function HeaderMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="mt-8 grid gap-px border border-white/20 bg-white/20 sm:grid-cols-3">
-      <SummaryItem
-        label="Calories from macros"
-        value={`${calculatedCalories.toLocaleString()} kcal`}
-      />
-
-      <SummaryItem
-        label="Calorie target"
-        value={`${targetCalories.toLocaleString()} kcal`}
-      />
-
-      <SummaryItem
-        label="Difference"
-        value={`${difference > 0 ? "+" : ""}${difference.toLocaleString()} kcal`}
-        accent={difference === 0}
-      />
+    <div className="bg-[#090909] p-5">
+      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+        {label}
+      </p>
+      <p className="mt-2 text-lg font-bold">{value}</p>
     </div>
   );
 }
 
-function SummaryItem({
+function MetricCard({
   label,
   value,
+  helper,
   accent = false,
 }: {
   label: string;
   value: string;
+  helper: string;
   accent?: boolean;
 }) {
   return (
-    <div className="bg-[#090909] p-5">
+    <div className="bg-black p-6">
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
         {label}
       </p>
-
       <p
-        className="mt-3 text-xl font-bold"
+        className="mt-5 text-4xl font-black tracking-[-0.045em]"
         style={accent ? { color: ACCENT } : undefined}
       >
         {value}
       </p>
+      <p className="mt-3 text-xs text-zinc-600">{helper}</p>
+    </div>
+  );
+}
+
+function SectionIntro({
+  number,
+  label,
+  description,
+}: {
+  number: string;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <p className="font-mono text-xs font-bold" style={{ color: ACCENT }}>
+        {number}
+      </p>
+      <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">
+        {label}
+      </h2>
+      <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-500">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function CheckInStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-[#090909] p-5">
+      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+        {label}
+      </p>
+      <p className="mt-3 text-lg font-bold">{value}</p>
+    </div>
+  );
+}
+
+function NutritionStat({
+  label,
+  value,
+  suffix,
+}: {
+  label: string;
+  value: string;
+  suffix: string;
+}) {
+  return (
+    <div className="bg-[#090909] p-5">
+      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+        {label}
+      </p>
+      <p className="mt-3 text-2xl font-black">
+        {value}
+        {value !== "—" && (
+          <span className="ml-2 text-xs font-normal text-zinc-600">{suffix}</span>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function EmptyState({
+  title,
+  body,
+  href,
+  action,
+}: {
+  title: string;
+  body: string;
+  href: string;
+  action: string;
+}) {
+  return (
+    <div className="border border-white/20 bg-[#090909] p-6">
+      <p className="text-lg font-bold">{title}</p>
+      <p className="mt-2 text-sm text-zinc-500">{body}</p>
+      <Link
+        href={href}
+        className="mt-6 inline-block font-semibold underline decoration-[1px] underline-offset-8"
+        style={{ textDecorationColor: ACCENT }}
+      >
+        {action}
+      </Link>
+    </div>
+  );
+}
+
+function WeightTrend({ checkIns }: { checkIns: CheckInRow[] }) {
+  const points = checkIns
+    .filter((item) => item.weight !== null)
+    .slice(0, 8)
+    .reverse();
+
+  if (points.length === 0) return null;
+
+  const weights = points.map((item) => item.weight as number);
+  const min = Math.min(...weights);
+  const max = Math.max(...weights);
+  const range = Math.max(max - min, 1);
+
+  return (
+    <div className="border border-white/20 bg-[#090909] p-6">
+      <div className="flex h-56 items-end gap-3">
+        {points.map((point) => {
+          const weight = point.weight as number;
+          const height = 25 + ((weight - min) / range) * 75;
+
+          return (
+            <div
+              key={point.id}
+              className="flex min-w-0 flex-1 flex-col items-center justify-end"
+            >
+              <span className="mb-3 text-xs font-bold">{weight} kg</span>
+              <div className="flex h-36 w-full items-end border-b border-white/20">
+                <div
+                  className="w-full"
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: ACCENT,
+                  }}
+                />
+              </div>
+              <span className="mt-3 truncate font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-600">
+                {new Date(`${point.check_in_date}T00:00:00`).toLocaleDateString(
+                  "en-GB",
+                  { day: "2-digit", month: "short" }
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
