@@ -58,24 +58,22 @@ export default function Dashboard() {
   const [addingClient, setAddingClient] = useState(false);
 
   useEffect(() => {
-    void loadClients();
-  }, []);
+    async function loadClients() {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name")
+        .order("created_at", { ascending: true });
 
-  async function loadClients() {
-    setErrorMessage("");
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, name")
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+      setClients(data ?? []);
     }
 
-    setClients(data ?? []);
-  }
+    void loadClients();
+  }, []);
 
   function updateNewClient(
     field: keyof NewClientForm,
@@ -297,7 +295,7 @@ export default function Dashboard() {
                 </h2>
 
                 <p className="mt-2 text-sm text-zinc-500">
-                  Enter the client's initial information.
+                  Enter the client&apos;s initial information.
                   Nutrition and check-ins are managed
                   separately.
                 </p>
