@@ -152,7 +152,6 @@ export default function ClientNutritionPage() {
   return (
     <main className="min-h-screen bg-black px-6 py-10 text-white lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <ClientNav clientId={clientId} active="nutrition" />
 
         <header className="border-b border-white/20 py-14">
           <p className="font-mono text-xs font-bold uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
@@ -279,29 +278,6 @@ export default function ClientNutritionPage() {
         </form>
       </div>
     </main>
-  );
-}
-
-function ClientNav({ clientId, active }: { clientId: string; active: "profile" | "nutrition" | "check-ins" }) {
-  const items = [
-    { key: "profile", label: "Information", href: `/clients/${clientId}/profile` },
-    { key: "nutrition", label: "Nutrition", href: `/clients/${clientId}/nutrition` },
-    { key: "check-ins", label: "Check-ins", href: `/clients/${clientId}/check-ins` },
-  ];
-
-  return (
-    <nav className="flex flex-col gap-5 border-b border-white/20 pb-6 sm:flex-row sm:items-center sm:justify-between">
-      <Link href={`/clients/${clientId}`} className="font-mono text-xs font-bold uppercase tracking-[0.18em]" style={{ color: ACCENT }}>
-        ← Client dashboard
-      </Link>
-      <div className="flex flex-wrap gap-5">
-        {items.map((item) => (
-          <Link key={item.key} href={item.href} className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: item.key === active ? ACCENT : "#71717a" }}>
-            {item.label}
-          </Link>
-        ))}
-      </div>
-    </nav>
   );
 }
 
