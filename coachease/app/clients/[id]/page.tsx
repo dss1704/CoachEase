@@ -113,7 +113,7 @@ export default function ClientDashboardPage() {
   const previous = checkIns[1] ?? null;
 
   const latestWeight =
-    latest?.weight ?? client?.current_weight ?? client?.starting_weight ?? null;
+    checkIns.find((entry) => entry.weight !== null)?.weight ?? client?.current_weight ?? client?.starting_weight ?? null;
 
   const weightChange =
     latest?.weight !== null &&
@@ -177,7 +177,7 @@ export default function ClientDashboardPage() {
       <main className="min-h-screen bg-black px-6 py-12 text-white">
         <p className="text-xl font-semibold">Client not found.</p>
         <Link
-          href="/dashboard"
+          href="/dashboard/clients"
           className="mt-8 inline-block font-semibold"
           style={{ color: ACCENT }}
         >
@@ -192,7 +192,7 @@ export default function ClientDashboardPage() {
       <div className="mx-auto max-w-7xl">
         <nav className="flex flex-col justify-between gap-5 border-b border-white/20 pb-6 sm:flex-row sm:items-center">
           <Link
-            href="/dashboard"
+            href="/dashboard/clients"
             className="font-mono text-xs font-bold uppercase tracking-[0.18em]"
             style={{ color: ACCENT }}
           >
