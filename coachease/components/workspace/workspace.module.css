@@ -392,3 +392,61 @@
   .guideCards li>div:last-child { padding: 22px; }
   .guideCards h2, .guideCards li:first-child h2 { font-size: 27px; }
 }
+
+.metrics span { font-size: 16px; font-weight: 750; line-height: 1.35; }
+.searchTrigger { display: flex; gap: 14px; align-items: center; border: 1px solid #64716a; background: #303839; padding: 12px 16px; color: #f0f3ec; font-size: 14px; min-height: 46px; cursor: pointer; text-align: left; width: min(490px,100%); }
+.searchTrigger>span:first-child { font-size: 24px; line-height: 1; color: #c7ff00; }
+.searchTrigger>span:last-child { margin-left: auto; color: #c7ff00; }
+.searchDialog { width: min(680px,calc(100vw - 32px)); }
+.searchBody { padding: 24px; }
+.searchGroup { display: block; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: #c7ff00; margin: 22px 0 12px; }
+.searchResults { list-style: none; padding: 0; }
+.searchResults li+li { border-top: 1px solid #48524d; }
+.searchResults a { display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #2c3533; }
+.searchResults a:hover { background: #39473d; }
+.searchResults strong { color: #f2f5ed; font-size: 16px; font-weight: 600; }
+.searchResults small { color: #c7ff00; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.searchResults span { font-size: 12px; color: #b8c7bb; }
+.retrySearch { text-decoration: underline; cursor: pointer; padding: 6px; }
+.tourDialog { width: min(760px,calc(100vw - 32px)); }
+.tourVisual { padding: 28px 32px; background: #dfe5d8; color: #243125; }
+.tourVisual .kicker { color: #4c5b3d; }
+.tourNumber { font-size: 72px; letter-spacing: -.07em; line-height: 1; font-weight: 700; margin: 20px 0; }
+.tourNumber span { font-size: 18px; letter-spacing: -.025em; font-weight: 500; color: #64705d; }
+.tourVisual>p { font-size: 20px; font-weight: 600; letter-spacing: -.035em; }
+.tourChips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.tourChips>span { border: 1px solid #9daa93; padding: 8px 12px; font-size: 12px; }
+.tourBody { padding: 28px 32px; }
+.tourBody h2 { font-size: clamp(26px,4vw,36px); line-height: 1.05; }
+.tourBody footer { display: flex; gap: 12px; justify-content: space-between; margin-top: 25px; flex-wrap: wrap; }
+.tourBody footer>div { display: flex; gap: 10px; }
+.tourDots { display: flex; gap: 7px; margin-top: 24px; }
+.tourDots i { height: 4px; flex: 1; background: #53604d; }
+.tourDots i[data-active="true"] { background: #c7ff00; }
+.closeTour { color: #d7e0d0; text-decoration: underline; padding: 14px 0; font-size: 13px; cursor: pointer; }
+.helpIntro { background: #35413a; border-left: 5px solid #c7ff00; padding: 30px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; margin-bottom: 28px; }
+.helpIntro h2 { font-size: 34px; line-height: 1.05; letter-spacing: -.05em; font-weight: 600; }
+.faqSection { background: #2b3432; padding: 28px; }
+.faqSection .search input { width: 100%; max-width: 600px; padding: 14px; font-size: 16px; }
+.faqSection .searchGroup { margin-top: 0; }
+.faqList { margin-top: 24px; }
+.faqList article { border-top: 1px solid #5c6b60; scroll-margin-top: 20px; }
+.faqList article:last-child { border-bottom: 1px solid #5c6b60; }
+.faqList h2 button { width: 100%; display: flex; align-items: center; gap: 20px; text-align: left; font-size: 18px; font-weight: 600; padding: 22px 0; cursor: pointer; }
+.faqList h2 button>span { color: #c7ff00; font-size: 12px; font-weight: 400; }
+.faqList h2 b { margin-left: auto; color: #c7ff00; font-size: 24px; }
+.faqList article>div { padding: 0 30px 24px; }
+.faqList article>div p { color: #c5d0c5; font-size: 15px; line-height: 1.8; max-width: 780px; }
+.faqList article>div a { display: inline-block; color: #c7ff00; font-size: 14px; margin-top: 15px; padding: 6px 0; }
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; gap: 12px; }
+  .searchTrigger { width: 100%; font-size: 13px; }
+  .metrics span { font-size: 15px; font-weight: 750; }
+  .helpIntro { grid-template-columns: 1fr; padding: 24px; }
+  .faqSection { padding: 22px; }
+  .faqList h2 button { gap: 12px; font-size: 16px; }
+  .faqList article>div { padding-left: 0; padding-right: 0; }
+  .tourVisual, .tourBody { padding: 22px; }
+  .tourNumber { font-size: 52px; margin: 14px 0; }
+  .searchBody { padding: 20px; }
+}
