@@ -270,7 +270,7 @@ export default function ClientDashboardPage() {
           />
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="01"
             label="Latest check-in"
@@ -337,7 +337,7 @@ export default function ClientDashboardPage() {
           )}
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="02"
             label="Progress"
@@ -356,7 +356,7 @@ export default function ClientDashboardPage() {
           )}
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="03"
             label="Nutrition"
@@ -403,7 +403,7 @@ export default function ClientDashboardPage() {
           </div>
         </section>
 
-        <section className="grid gap-8 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="04"
             label="Coach notes"

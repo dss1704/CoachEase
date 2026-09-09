@@ -301,7 +301,7 @@ function Field({ label, required = false, children }: { label: string; required?
 
 function Section({ number, label, description, children }: { number: string; label: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+    <section className={s.recordSection}>
       <div>
         <p className="text-xs font-bold" style={{ color: ACCENT }}>{number}</p>
         <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">{label}</h2>
