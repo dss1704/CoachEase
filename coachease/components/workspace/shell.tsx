@@ -15,7 +15,7 @@ export default function CoachShell({ children, email }: { children: ReactNode; e
   return <div className={s.shell}>
     <a href="#coach-content" className={s.skip}>Skip to workspace</a>
     <aside className={s.sidebar}>
-      <Link className={s.brand} href="/dashboard">CE<span>CoachEase</span><i aria-hidden="true" /></Link>
+      <Link className={s.brand} href="/dashboard"><span>CoachEase</span><i aria-hidden="true" /></Link>
       <p className={s.sidebarLabel}>Coach workspace</p>
       <nav aria-label="Coach navigation" className={s.navigation}>{navigation.map(item => {
         const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href) || item.label === "Clients" && pathname.startsWith("/clients/");

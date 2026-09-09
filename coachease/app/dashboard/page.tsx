@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { workspaceData } from "@/lib/workspace/data";
 import AddClient from "@/components/workspace/add-client";
 import TaskList from "@/components/workspace/tasks";
@@ -8,6 +9,7 @@ export default async function Dashboard() {
   const { clients, clientError, checkInError, summary } = await workspaceData();
   return <main className={s.page}>
     <header className={s.pageHeader}><div><p className={s.kicker}>Your coaching day</p><h1>Dashboard</h1><p>The people, the progress and what needs you next.</p></div><AddClient /></header>
+    <section className={s.coachBanner} aria-label="CoachEase workspace"><div><p className={s.kicker}>CoachEase / The workspace</p><h2>Your day.<br />In one place.</h2><p>Client records, weekly reviews<br />and the next thing to do.</p></div><div className={s.coachPhoto}><Image src="/coach-desk.jpeg" alt="A desk with a laptop, tablet, phone and coffee" fill sizes="(max-width: 760px) 100vw, 50vw" /><span>COACHEASE / COACH WORKSPACE</span></div></section>
     {clientError ? <p role="alert" className={s.error}>Could not load your clients. Refresh to try again.</p> : <>
       {checkInError && <p role="alert" className={s.error}>Check-ins could not be loaded. Check-in counts and reminders are unavailable until you refresh successfully.</p>}
       <section className={s.metrics} aria-label="Workspace summary">

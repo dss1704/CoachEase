@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import s from "@/components/workspace/workspace.module.css";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
-const ACCENT = "#B7FF3C";
+const ACCENT = "#c7ff00";
 
 type ClientForm = {
   name: string;
@@ -145,8 +146,8 @@ export default function ClientProfilePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
+      <main className="flex min-h-screen items-center justify-center bg-[#111111] text-white">
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
           Loading client information...
         </p>
       </main>
@@ -155,7 +156,7 @@ export default function ClientProfilePage() {
 
   if (notFound) {
     return (
-      <main className="min-h-screen bg-black px-6 py-12 text-white">
+      <main className="min-h-screen bg-[#111111] px-6 py-12 text-white">
         <p className="text-xl font-semibold">Client not found.</p>
         <Link href="/dashboard" className="mt-8 inline-block font-semibold" style={{ color: ACCENT }}>
           ← Return to dashboard
@@ -165,17 +166,17 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white lg:px-10">
+    <main className={s.page}>
       <div className="mx-auto max-w-7xl">
 
-        <header className="border-b border-white/20 py-14">
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
+        <header className={s.recordHeader}>
+          <p className="text-xs font-bold uppercase tracking-[0.1em]" style={{ color: ACCENT }}>
             Client information
           </p>
           <h1 className="mt-4 break-words text-5xl font-black uppercase leading-[0.95] tracking-[-0.055em] sm:text-6xl">
             {form.name || "Unnamed client"}
           </h1>
-          <p className="mt-5 text-zinc-500">
+          <p className="mt-5 text-zinc-400">
             Contact details, coaching goal and private coach notes.
           </p>
         </header>
@@ -284,12 +285,12 @@ export default function ClientProfilePage() {
 }
 
 const inputClassName =
-  "mt-3 w-full border border-white/20 bg-[#090909] px-4 py-4 text-white outline-none transition placeholder:text-zinc-700 focus:border-white";
+  "mt-3 w-full border border-white/20 bg-[#181818] px-4 py-4 text-white outline-none transition placeholder:text-zinc-400 focus:border-white";
 
 function Field({ label, required = false, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+      <span className="text-[11px] uppercase tracking-[0.08em] text-zinc-400">
         {label}
         {required && <span className="ml-1" style={{ color: ACCENT }}>*</span>}
       </span>
@@ -300,11 +301,11 @@ function Field({ label, required = false, children }: { label: string; required?
 
 function Section({ number, label, description, children }: { number: string; label: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+    <section className={s.recordSection}>
       <div>
-        <p className="font-mono text-xs font-bold" style={{ color: ACCENT }}>{number}</p>
+        <p className="text-xs font-bold" style={{ color: ACCENT }}>{number}</p>
         <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">{label}</h2>
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-500">{description}</p>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-400">{description}</p>
       </div>
       <div>{children}</div>
     </section>

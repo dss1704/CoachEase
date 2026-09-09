@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import s from "@/components/workspace/workspace.module.css";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
-const ACCENT = "#B7FF3C";
+const ACCENT = "#c7ff00";
 
 type ClientRow = {
   id: string;
@@ -27,7 +28,6 @@ type CheckInRow = {
   id: string;
   check_in_date: string;
   weight: number | null;
-  adherence: number | null;
   energy: number | null;
   hunger: number | null;
   sleep: number | null;
@@ -86,7 +86,6 @@ export default function ClientDashboardPage() {
           id,
           check_in_date,
           weight,
-          adherence,
           energy,
           hunger,
           sleep,
@@ -123,17 +122,6 @@ export default function ClientDashboardPage() {
       ? latest.weight - previous.weight
       : null;
 
-  const averageAdherence = useMemo(() => {
-    const values = checkIns
-      .map((item) => item.adherence)
-      .filter((value): value is number => value !== null);
-
-    if (values.length === 0) return null;
-
-    return Math.round(
-      values.reduce((total, value) => total + value, 0) / values.length
-    );
-  }, [checkIns]);
 
   const distanceToTarget =
     latestWeight == null || client?.target_weight == null
@@ -164,8 +152,8 @@ export default function ClientDashboardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
+      <main className="flex min-h-screen items-center justify-center bg-[#111111] text-white">
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
           Loading client dashboard...
         </p>
       </main>
@@ -174,7 +162,7 @@ export default function ClientDashboardPage() {
 
   if (notFound || !client) {
     return (
-      <main className="min-h-screen bg-black px-6 py-12 text-white">
+      <main className="min-h-screen bg-[#111111] px-6 py-12 text-white">
         <p className="text-xl font-semibold">Client not found.</p>
         <Link
           href="/dashboard/clients"
@@ -188,12 +176,12 @@ export default function ClientDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white lg:px-10">
+    <main className={s.page}>
       <div className="mx-auto max-w-7xl">
         <nav className="flex flex-col justify-between gap-5 border-b border-white/20 pb-6 sm:flex-row sm:items-center">
           <Link
             href="/dashboard/clients"
-            className="font-mono text-xs font-bold uppercase tracking-[0.18em]"
+            className="text-xs font-bold uppercase tracking-[0.08em]"
             style={{ color: ACCENT }}
           >
             ← All clients
@@ -202,7 +190,7 @@ export default function ClientDashboardPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href={`/clients/${clientId}/profile`}
-              className="border border-white/20 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white transition hover:bg-white/5"
+              className="border border-white/20 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-white transition hover:bg-white/5"
             >
               Edit client
             </Link>
@@ -210,21 +198,21 @@ export default function ClientDashboardPage() {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="border border-red-500/40 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-red-400 transition hover:bg-red-500/10"
+              className="border border-red-500/40 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-red-400 transition hover:bg-red-500/10"
             >
               Delete client
             </button>
 
-            <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+            <span className="ml-2 text-[10px] uppercase tracking-[0.08em] text-zinc-400">
               Client ID · {clientId.slice(0, 8)}
             </span>
           </div>
         </nav>
 
-        <header className="grid gap-10 border-b border-white/20 py-14 lg:grid-cols-[1fr_420px] lg:items-end">
+        <header className={`${s.recordHeader} ${s.recordOverview}`}>
           <div>
             <p
-              className="font-mono text-xs font-bold uppercase tracking-[0.24em]"
+              className="text-xs font-bold uppercase tracking-[0.1em]"
               style={{ color: ACCENT }}
             >
               Client dashboard
@@ -232,7 +220,7 @@ export default function ClientDashboardPage() {
             <h1 className="mt-4 break-words text-5xl font-black uppercase leading-[0.95] tracking-[-0.055em] sm:text-6xl">
               {client.name}
             </h1>
-            <p className="mt-5 max-w-2xl text-zinc-500">
+            <p className="mt-5 max-w-2xl text-zinc-400">
               {client.goal || "No primary goal has been added yet."}
             </p>
           </div>
@@ -251,7 +239,7 @@ export default function ClientDashboardPage() {
           </div>
         )}
 
-        <section className="grid gap-px border-b border-white/20 bg-white/20 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-px border-b border-white/20 bg-white/20 md:grid-cols-3">
           <MetricCard
             label="Current weight"
             value={latestWeight == null ? "—" : `${latestWeight} kg`}
@@ -267,15 +255,7 @@ export default function ClientDashboardPage() {
             helper={previous ? "Vs previous check-in" : "Need 2 check-ins"}
             accent={weightChange !== null}
           />
-          <MetricCard
-            label="Adherence"
-            value={latest?.adherence == null ? "—" : `${latest.adherence}%`}
-            helper={
-              averageAdherence == null
-                ? "No adherence data"
-                : `${averageAdherence}% average`
-            }
-          />
+
           <MetricCard
             label="To target"
             value={distanceToTarget == null ? "—" : `${Math.abs(distanceToTarget)} kg`}
@@ -290,7 +270,7 @@ export default function ClientDashboardPage() {
           />
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="01"
             label="Latest check-in"
@@ -301,7 +281,7 @@ export default function ClientDashboardPage() {
             <div>
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-zinc-400">
                     Most recent
                   </p>
                   <p className="mt-2 text-2xl font-black uppercase tracking-[-0.03em]">
@@ -318,15 +298,12 @@ export default function ClientDashboardPage() {
                 </Link>
               </div>
 
-              <div className="mt-6 grid gap-px border border-white/20 bg-white/20 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="mt-6 grid gap-px border border-white/20 bg-white/20 sm:grid-cols-2 xl:grid-cols-4">
                 <CheckInStat
                   label="Weight"
                   value={latest.weight == null ? "—" : `${latest.weight} kg`}
                 />
-                <CheckInStat
-                  label="Adherence"
-                  value={latest.adherence == null ? "—" : `${latest.adherence}%`}
-                />
+
                 <CheckInStat
                   label="Energy"
                   value={latest.energy == null ? "—" : `${latest.energy}/10`}
@@ -341,8 +318,8 @@ export default function ClientDashboardPage() {
                 />
               </div>
 
-              <div className="mt-6 border border-white/20 bg-[#090909] p-6">
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+              <div className="mt-6 border border-white/20 bg-[#181818] p-6">
+                <p className="text-[10px] uppercase tracking-[0.08em] text-zinc-400">
                   Check-in notes
                 </p>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
@@ -360,7 +337,7 @@ export default function ClientDashboardPage() {
           )}
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="02"
             label="Progress"
@@ -379,7 +356,7 @@ export default function ClientDashboardPage() {
           )}
         </section>
 
-        <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="03"
             label="Nutrition"
@@ -426,14 +403,14 @@ export default function ClientDashboardPage() {
           </div>
         </section>
 
-        <section className="grid gap-8 py-12 lg:grid-cols-[280px_1fr]">
+        <section className={s.recordSection}>
           <SectionIntro
             number="04"
             label="Coach notes"
             description="Private context and observations for this client."
           />
 
-          <div className="border border-white/20 bg-[#090909] p-6">
+          <div className="border border-white/20 bg-[#181818] p-6">
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
               {client.coach_notes || "No private coach notes yet."}
             </p>
@@ -442,10 +419,10 @@ export default function ClientDashboardPage() {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg border border-white/20 bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg border border-white/20 bg-[#111111]">
             <div className="border-b border-white/20 p-6">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-red-400">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-red-400">
                 Delete client
               </p>
 
@@ -504,8 +481,8 @@ function formatSignedWeight(value: number | null) {
 
 function HeaderMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#090909] p-5">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+    <div className="bg-[#181818] p-5">
+      <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
         {label}
       </p>
       <p className="mt-2 text-lg font-bold">{value}</p>
@@ -525,8 +502,8 @@ function MetricCard({
   accent?: boolean;
 }) {
   return (
-    <div className="bg-black p-6">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+    <div className="bg-[#111111] p-6">
+      <p className="text-[10px] uppercase tracking-[0.08em] text-zinc-400">
         {label}
       </p>
       <p
@@ -535,7 +512,7 @@ function MetricCard({
       >
         {value}
       </p>
-      <p className="mt-3 text-xs text-zinc-600">{helper}</p>
+      <p className="mt-3 text-xs text-zinc-400">{helper}</p>
     </div>
   );
 }
@@ -551,13 +528,13 @@ function SectionIntro({
 }) {
   return (
     <div>
-      <p className="font-mono text-xs font-bold" style={{ color: ACCENT }}>
+      <p className="text-xs font-bold" style={{ color: ACCENT }}>
         {number}
       </p>
       <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">
         {label}
       </h2>
-      <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-500">
+      <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-400">
         {description}
       </p>
     </div>
@@ -566,8 +543,8 @@ function SectionIntro({
 
 function CheckInStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#090909] p-5">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+    <div className="bg-[#181818] p-5">
+      <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
         {label}
       </p>
       <p className="mt-3 text-lg font-bold">{value}</p>
@@ -585,14 +562,14 @@ function NutritionStat({
   suffix: string;
 }) {
   return (
-    <div className="bg-[#090909] p-5">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+    <div className="bg-[#181818] p-5">
+      <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">
         {label}
       </p>
       <p className="mt-3 text-2xl font-black">
         {value}
         {value !== "—" && (
-          <span className="ml-2 text-xs font-normal text-zinc-600">{suffix}</span>
+          <span className="ml-2 text-xs font-normal text-zinc-400">{suffix}</span>
         )}
       </p>
     </div>
@@ -611,9 +588,9 @@ function EmptyState({
   action: string;
 }) {
   return (
-    <div className="border border-white/20 bg-[#090909] p-6">
+    <div className="border border-white/20 bg-[#181818] p-6">
       <p className="text-lg font-bold">{title}</p>
-      <p className="mt-2 text-sm text-zinc-500">{body}</p>
+      <p className="mt-2 text-sm text-zinc-400">{body}</p>
       <Link
         href={href}
         className="mt-6 inline-block font-semibold underline decoration-[1px] underline-offset-8"
@@ -639,7 +616,7 @@ function WeightTrend({ checkIns }: { checkIns: CheckInRow[] }) {
   const range = Math.max(max - min, 1);
 
   return (
-    <div className="border border-white/20 bg-[#090909] p-6">
+    <div className="border border-white/20 bg-[#181818] p-6">
       <div className="flex h-56 items-end gap-3">
         {points.map((point) => {
           const weight = point.weight as number;
@@ -660,7 +637,7 @@ function WeightTrend({ checkIns }: { checkIns: CheckInRow[] }) {
                   }}
                 />
               </div>
-              <span className="mt-3 truncate font-mono text-[9px] uppercase tracking-[0.08em] text-zinc-600">
+              <span className="mt-3 truncate text-[9px] uppercase tracking-[0.08em] text-zinc-400">
                 {new Date(`${point.check_in_date}T00:00:00`).toLocaleDateString(
                   "en-GB",
                   { day: "2-digit", month: "short" }

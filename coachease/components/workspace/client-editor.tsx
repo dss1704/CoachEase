@@ -2,9 +2,10 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import NutritionEditor, { type NutritionClient } from "./nutrition-editor";
 import s from "./workspace.module.css";
 
-type Client = { id: string; name: string; goal: string | null; coach_notes: string | null; starting_weight: number | null; current_weight: number | null; target_weight: number | null };
+type Client = NutritionClient & { id: string; name: string; goal: string | null; coach_notes: string | null; starting_weight: number | null; current_weight: number | null; target_weight: number | null };
 export default function ClientEditor({ client, section }: { client: Client; section: "goals" | "notes" | "stats" }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -47,15 +48,6 @@ export default function ClientEditor({ client, section }: { client: Client; sect
         <button className={s.primary} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
       </fieldset>
     </form>
-    {section === "stats" && <MacroCalculator />}
+    {section === "stats" && <NutritionEditor client={client} />}
   </main>;
-}
-function MacroCalculator() {
-  const [protein, setProtein] = useState("");
-  const [carbs, setCarbs] = useState("");
-  const [fat, setFat] = useState("");
-  const values = [protein, carbs, fat];
-  const valid = values.every(value => value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0);
-  const calories = Number(protein) * 4 + Number(carbs) * 4 + Number(fat) * 9;
-  return <section className={`${s.panel} ${s.editor}`}><h2>Macro calorie calculator</h2><p className={s.help}>Calculate the energy in your chosen macros. This calculation is not saved; use Nutrition targets to store the client’s plan.</p><div className={`${s.form} ${s.formGrid}`}>{[["Protein (g)", protein, setProtein], ["Carbs (g)", carbs, setCarbs], ["Fat (g)", fat, setFat]].map(([label, value, setter]) => <label key={String(label)}>{String(label)}<input type="number" min="0" step="any" value={String(value)} onChange={event => (setter as (value: string) => void)(event.target.value)} /></label>)}</div><p className={s.calorieTotal} aria-live="polite">{valid ? Math.round(calories).toLocaleString("en-GB") : "—"}<span> kcal / day</span></p><p className={s.help}>Protein × 4 + carbs × 4 + fat × 9. This does not estimate an individual’s calorie needs.</p></section>;
 }
