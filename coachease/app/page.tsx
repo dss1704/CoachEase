@@ -84,7 +84,7 @@ export default function Home() {
               </details>
               <details>
                 <summary><span>03</span>Weekly check-ins<span className={s.expand} aria-hidden="true" /></summary>
-                <p>Record weight, adherence, energy, hunger and sleep. Follow the history and keep the notes beside the numbers.</p>
+                <p>Record weight, energy, hunger and sleep. Follow the history and keep the notes beside the numbers.</p>
               </details>
             </div>
             <Link href="/login" className={s.textLink}>Open your workspace <span aria-hidden="true">↗</span></Link>

@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import s from "@/components/workspace/workspace.module.css";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
-const ACCENT = "#B7FF3C";
+const ACCENT = "#c7ff00";
 
 type CheckInForm = {
   check_in_date: string;
   weight: string;
-  adherence: string;
   energy: string;
   hunger: string;
   sleep: string;
@@ -22,7 +22,6 @@ type CheckInRow = {
   id: string;
   check_in_date: string;
   weight: number | null;
-  adherence: number | null;
   energy: number | null;
   hunger: number | null;
   sleep: number | null;
@@ -52,7 +51,6 @@ function emptyCheckIn(): CheckInForm {
   return {
     check_in_date: getDateBounds().today,
     weight: "",
-    adherence: "",
     energy: "",
     hunger: "",
     sleep: "",
@@ -94,7 +92,7 @@ export default function ClientCheckInsPage() {
 
       const { data: checkInData, error: checkInError } = await supabase
         .from("check_ins")
-        .select("id, check_in_date, weight, adherence, energy, hunger, sleep, notes, created_at")
+        .select("id, check_in_date, weight, energy, hunger, sleep, notes, created_at")
         .eq("client_id", clientId)
         .order("check_in_date", { ascending: false })
         .order("created_at", { ascending: false });
@@ -143,18 +141,12 @@ export default function ClientCheckInsPage() {
     }
 
     const weight = numberOrNull(form.weight);
-    const adherence = numberOrNull(form.adherence);
     const energy = numberOrNull(form.energy);
     const hunger = numberOrNull(form.hunger);
     const sleep = numberOrNull(form.sleep);
 
     if (weight !== null && weight <= 0) {
       setErrorMessage("Weight must be greater than 0.");
-      return;
-    }
-
-    if (adherence !== null && (adherence < 0 || adherence > 100)) {
-      setErrorMessage("Adherence must be between 0 and 100.");
       return;
     }
 
@@ -191,13 +183,12 @@ export default function ClientCheckInsPage() {
         coach_id: user.id,
         check_in_date: form.check_in_date,
         weight,
-        adherence,
         energy,
         hunger,
         sleep,
         notes,
       })
-      .select("id, check_in_date, weight, adherence, energy, hunger, sleep, notes, created_at")
+      .select("id, check_in_date, weight, energy, hunger, sleep, notes, created_at")
       .single();
 
     if (error) {
@@ -256,8 +247,8 @@ export default function ClientCheckInsPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-500">
+      <main className="flex min-h-screen items-center justify-center bg-[#111111] text-white">
+        <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
           Loading check-ins...
         </p>
       </main>
@@ -266,7 +257,7 @@ export default function ClientCheckInsPage() {
 
   if (notFound) {
     return (
-      <main className="min-h-screen bg-black px-6 py-12 text-white">
+      <main className="min-h-screen bg-[#111111] px-6 py-12 text-white">
         <p className="text-xl font-semibold">Client not found.</p>
         <Link href="/dashboard" className="mt-8 inline-block font-semibold" style={{ color: ACCENT }}>
           ← Return to dashboard
@@ -276,17 +267,17 @@ export default function ClientCheckInsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white lg:px-10">
+    <main className={s.page}>
       <div className="mx-auto max-w-7xl">
 
-        <header className="border-b border-white/20 py-14">
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
+        <header className={s.recordHeader}>
+          <p className="text-xs font-bold uppercase tracking-[0.1em]" style={{ color: ACCENT }}>
             Weekly check-ins
           </p>
           <h1 className="mt-4 break-words text-5xl font-black uppercase leading-[0.95] tracking-[-0.055em] sm:text-6xl">
             {clientName}
           </h1>
-          <p className="mt-5 text-zinc-500">
+          <p className="mt-5 text-zinc-400">
             Record weekly progress without touching client information or nutrition targets.
           </p>
         </header>
@@ -314,19 +305,6 @@ export default function ClientCheckInsPage() {
                 onChange={(e) => updateField("weight", e.target.value)}
                 className={inputClassName}
                 placeholder="75.2"
-              />
-            </Field>
-
-            <Field label="Adherence" suffix="%">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={form.adherence}
-                onChange={(e) => updateField("adherence", e.target.value)}
-                className={inputClassName}
-                placeholder="90"
               />
             </Field>
 
@@ -376,7 +354,7 @@ export default function ClientCheckInsPage() {
                 value={form.notes}
                 onChange={(e) => updateField("notes", e.target.value)}
                 className={`${inputClassName} min-h-40 resize-y`}
-                placeholder="Training performance, diet adherence, recovery, issues this week..."
+                placeholder="Training performance, nutrition, recovery, issues this week..."
               />
             </Field>
           </div>
@@ -409,17 +387,17 @@ export default function ClientCheckInsPage() {
 
         <Section number="02" label="History" description="Previous check-ins for this client.">
           {checkIns.length === 0 ? (
-            <p className="border border-white/20 bg-[#090909] p-5 text-sm text-zinc-500">
+            <p className="border border-white/20 bg-[#181818] p-5 text-sm text-zinc-400">
               No check-ins yet.
             </p>
           ) : (
             <div className="space-y-4">
               {checkIns.map((checkIn) => (
-                <article key={checkIn.id} className="border border-white/20 bg-[#090909] p-5">
+                <article key={checkIn.id} className="border border-white/20 bg-[#181818] p-5">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                       <p className="text-lg font-bold">{formatDate(checkIn.check_in_date)}</p>
-                      <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">
+                      <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-zinc-400">
                         Weekly check-in
                       </p>
                     </div>
@@ -434,9 +412,8 @@ export default function ClientCheckInsPage() {
                     </button>
                   </div>
 
-                  <div className="mt-5 grid gap-px bg-white/20 sm:grid-cols-2 xl:grid-cols-5">
+                  <div className="mt-5 grid gap-px bg-white/20 sm:grid-cols-2 xl:grid-cols-4">
                     <Stat label="Weight" value={checkIn.weight == null ? "—" : `${checkIn.weight} kg`} />
-                    <Stat label="Adherence" value={checkIn.adherence == null ? "—" : `${checkIn.adherence}%`} />
                     <Stat label="Energy" value={checkIn.energy == null ? "—" : `${checkIn.energy}/10`} />
                     <Stat label="Hunger" value={checkIn.hunger == null ? "—" : `${checkIn.hunger}/10`} />
                     <Stat label="Sleep" value={checkIn.sleep == null ? "—" : `${checkIn.sleep}/10`} />
@@ -466,17 +443,17 @@ function formatDate(value: string) {
 }
 
 const inputClassName =
-  "mt-3 w-full border border-white/20 bg-[#090909] px-4 py-4 text-white outline-none transition placeholder:text-zinc-700 focus:border-white";
+  "mt-3 w-full border border-white/20 bg-[#181818] px-4 py-4 text-white outline-none transition placeholder:text-zinc-400 focus:border-white";
 
 function Field({ label, suffix, required = false, children }: { label: string; suffix?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="flex items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+      <span className="flex items-center justify-between gap-4 text-[11px] uppercase tracking-[0.08em] text-zinc-400">
         <span>
           {label}
           {required && <span className="ml-1" style={{ color: ACCENT }}>*</span>}
         </span>
-        {suffix && <span className="text-zinc-700">{suffix}</span>}
+        {suffix && <span className="text-zinc-400">{suffix}</span>}
       </span>
       {children}
     </label>
@@ -487,9 +464,9 @@ function Section({ number, label, description, children }: { number: string; lab
   return (
     <section className="grid gap-8 border-b border-white/20 py-12 lg:grid-cols-[280px_1fr]">
       <div>
-        <p className="font-mono text-xs font-bold" style={{ color: ACCENT }}>{number}</p>
+        <p className="text-xs font-bold" style={{ color: ACCENT }}>{number}</p>
         <h2 className="mt-4 text-2xl font-black uppercase tracking-[-0.035em]">{label}</h2>
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-500">{description}</p>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-zinc-400">{description}</p>
       </div>
       <div>{children}</div>
     </section>
@@ -498,8 +475,8 @@ function Section({ number, label, description, children }: { number: string; lab
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-black p-4">
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-600">{label}</p>
+    <div className="bg-[#111111] p-4">
+      <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-400">{label}</p>
       <p className="mt-2 font-semibold text-white">{value}</p>
     </div>
   );

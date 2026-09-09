@@ -29,7 +29,7 @@ export default function ClientPreview() {
             {[[14,23],[98,50],[182,43],[266,85],[350,113],[434,133]].map(([cx,cy])=><circle key={cx} cx={cx} cy={cy} r="4" fill="#fafbf7" stroke="#4f622e" strokeWidth="2" />)}
           </svg>
           <div className={s.chartLabels}><span>03 Aug</span><span>07 Sep</span></div>
-          <div className={s.recovery}><div><span>Energy</span><strong>8<small>/10</small></strong></div><div><span>Sleep</span><strong>7<small>/10</small></strong></div><div><span>Adherence</span><strong>92<small>%</small></strong></div></div>
+          <div className={s.recovery}><div><span>Energy</span><strong>8<small>/10</small></strong></div><div><span>Sleep</span><strong>7<small>/10</small></strong></div><div><span>Hunger</span><strong>5<small>/10</small></strong></div></div>
           <div className={s.checkNote}><span>Latest check-in</span><p>“Feeling stronger this week. Kept all three sessions in.”</p></div>
         </>}
         {view === "Nutrition" && <>
