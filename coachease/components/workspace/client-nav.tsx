@@ -11,6 +11,6 @@ export default function ClientNavigation({ clientId, name }: { clientId: string;
   const pathname = usePathname();
   return <div className={s.clientContext}><div><Link href="/dashboard/clients">← All clients</Link><strong>{name}</strong><span className={s.recordLabel}>Client record</span></div><nav aria-label="Client sections">{sections.map(([slug, label]) => {
     const href = `/clients/${clientId}${slug ? `/${slug}` : ""}`;
-    return <Link href={href} key={slug} aria-current={pathname === href ? "page" : undefined}>{label}{["workouts", "meal-plans"].includes(slug) && <span>Planned</span>}</Link>;
+    return <Link data-tour={slug || "progress"} href={href} key={slug} aria-current={pathname === href ? "page" : undefined}>{label}{["workouts", "meal-plans"].includes(slug) && <span>Planned</span>}</Link>;
   })}</nav></div>;
 }

@@ -13,16 +13,16 @@ const navigation = [
   { href: "/dashboard/guide", label: "Getting started", number: "04" },
   { href: "/dashboard/help", label: "Help & FAQ", number: "05" },
 ];
-export default function CoachShell({ children, email, tutorialPending, tutorialUnavailable }: { children: ReactNode; email: string; tutorialPending: boolean; tutorialUnavailable: boolean }) {
+export default function CoachShell({ children, email, tutorialPending, tutorialUnavailable, coachId }: { children: ReactNode; email: string; coachId: string; tutorialPending: boolean; tutorialUnavailable: boolean }) {
   const pathname = usePathname();
-  return <div className={s.shell}><TutorialProvider pending={tutorialPending} unavailable={tutorialUnavailable}>
+  return <div className={s.shell}><TutorialProvider coachId={coachId} pending={tutorialPending} unavailable={tutorialUnavailable}>
     <a href="#coach-content" className={s.skip}>Skip to workspace</a>
     <aside className={s.sidebar}>
       <Link className={s.brand} href="/dashboard"><span>CoachEase</span><i aria-hidden="true" /></Link>
       <p className={s.sidebarLabel}>Coach workspace</p>
       <nav aria-label="Coach navigation" className={s.navigation}>{navigation.map(item => {
         const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href) || item.label === "Clients" && pathname.startsWith("/clients/");
-        return <Link href={item.href} key={item.href} aria-current={active ? "page" : undefined}><span>{item.number}</span>{item.label}</Link>;
+        return <Link data-tour={item.href.split("/").pop()} href={item.href} key={item.href} aria-current={active ? "page" : undefined}><span>{item.number}</span>{item.label}</Link>;
       })}</nav>
       <div className={s.account}><span>Signed in as coach</span><p title={email}>{email}</p><form method="post" action="/auth/signout"><button type="submit">Log out ↗</button></form></div>
     </aside>
