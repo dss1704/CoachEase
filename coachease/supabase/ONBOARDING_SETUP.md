@@ -20,3 +20,11 @@ The migration has not been executed against the live project by Codex. Before me
 - Next, Back, Skip, Escape and keyboard focus work in the tour; search closes with Escape.
 
 No registration page is introduced. The trigger is first authenticated workspace visit after the update. The original Getting started guide remains available alongside the popup tour.
+
+## Interactive tour update
+
+The tour now points to real controls: Clients, Add client, an existing client record, Nutrition targets, Weekly check-ins, Notifications, Search and Help. Click the highlighted control or the popup action to try it; Next tip offers a non-destructive way past a step. With no client records, continue without creating a dummy client. Existing forms still require their normal save/submit action. Popups pause while native form/search dialogs are open.
+
+The database schema and completion API are unchanged: no additional SQL is required if the migration above has already run. Completed accounts can use Help & FAQ → Replay tutorial to see this version. Temporary in-progress step state uses account-scoped sessionStorage to survive navigation between dashboard and client layouts; durable completion still comes from Supabase.
+
+Review on desktop and mobile: highlighted control and popup placement, clicking real controls versus popup actions, pausing while a form/search is open, continuing after a client is created, no-client continuation, Back/Next tip, saved Finish/Skip, and replay after refresh. Positioning unit tests and builds do not replace these signed-in browser checks.

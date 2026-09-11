@@ -41,7 +41,7 @@ export default function AddClient() {
     finally { setSaving(false); }
   }
   return <>
-    <button type="button" className={s.primary} onClick={open}>+ Add client</button>
+    <button data-tour="add-client" type="button" className={s.primary} onClick={open}>+ Add client</button>
     <dialog ref={dialog} className={s.dialog} aria-labelledby="add-client-title" onCancel={event => { if (saving) event.preventDefault(); }}>
       <header><div><p className={s.kicker}>Start a client record</p><h2 id="add-client-title">Add client</h2></div><button type="button" className={s.close} aria-label="Close add client" disabled={saving} onClick={() => dialog.current?.close()}>×</button></header>
       <form ref={form} onSubmit={save} className={s.form}>
